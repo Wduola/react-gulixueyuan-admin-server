@@ -2,7 +2,7 @@
  * @description 路由器中间件 - 封装登录/注册路由
  */
 const express = require("express");
-const Cources = require("../../db/models/edu/courses");
+const courses = require("../../db/models/edu/courses");
 const { SuccessModal, ErrorModal } = require("../../model");
 
 const Router = express.Router;
@@ -13,17 +13,17 @@ const filter = {
 };
 
 /**
- * @api {post} /admin/edu/cource/save 新增课程
+ * @api {post} /admin/edu/course/save 新增课程
  * @apiDescription 新增课程
  * @apiName save
- * @apiGroup cource-admin-controller: 课程管理
+ * @apiGroup course-admin-controller: 课程管理
  * @apiHeader {String} token 权限令牌
  * @apiParam {String} teacherId 讲师id
  * @apiParam {String} subjectId 课程分类id
  * @apiParam {String} subjectParentId 父级课程分类id(0代表一级分类)
  * @apiParam {String} title 课程名称
- * @apiParam {String} price 课程价格（0代表免费）
- * @apiParam {String} lessonNum 课程总课时
+ * @apiParam {Number} price 课程价格（0代表免费）
+ * @apiParam {Number} lessonNum 课程总课时
  * @apiParam {String} description 课程简介
  * @apiParam {String} cover 可选，课程图片
  * @apiSuccess {Object} data 课程数据
@@ -35,30 +35,32 @@ const filter = {
  *      },
  *      "message": ""
  *  }
- * @apiSampleRequest http://47.103.203.152/admin/edu/cource/save
+ * @apiSampleRequest http://47.103.203.152/admin/edu/course/save
  * @apiVersion 1.0.0
  */
 router.post("/save", async (req, res) => {
 	const body = req.body;
 
 	try {
-		const result = await Cources.create(body);
+		const result = await courses.create(body);
 
 		// 保存成功
 		res.json(new SuccessModal({ data: result }));
 	} catch (e) {
+		console.log(e);
+
 		// 保存失败
 		res.json(new ErrorModal({ message: "缺少必要课程数据" }));
 	}
 });
 
 /**
- * @api {put} /admin/edu/cource/publish 发布课程
+ * @api {put} /admin/edu/course/publish 发布课程
  * @apiDescription 发布课程
  * @apiName publish
- * @apiGroup cource-admin-controller: 课程管理
+ * @apiGroup course-admin-controller: 课程管理
  * @apiHeader {String} token 权限令牌
- * @apiParam {String} courceId 课程id
+ * @apiParam {String} courseId 课程id
  * @apiSuccess {Object} data 课程数据
  * @apiSuccessExample {json} Success-Response:
  *  {
@@ -68,16 +70,16 @@ router.post("/save", async (req, res) => {
  *      },
  *      "message": ""
  *  }
- * @apiSampleRequest http://47.103.203.152/admin/edu/cource/publish
+ * @apiSampleRequest http://47.103.203.152/admin/edu/course/publish
  * @apiVersion 1.0.0
  */
 router.put("/publish", async (req, res) => {
-	const { courceId } = req.body;
+	const { courseId } = req.body;
 
 	try {
-		const result = await Cources.updateOne(
+		const result = await courses.updateOne(
 			{
-				_id: courceId,
+				_id: courseId,
 			},
 			{ $set: { status: 1 } }
 		);
@@ -91,12 +93,12 @@ router.put("/publish", async (req, res) => {
 });
 
 /**
- * @api {put} /admin/edu/cource/update 更新课程
+ * @api {put} /admin/edu/course/update 更新课程
  * @apiDescription 更新课程
  * @apiName update
- * @apiGroup cource-admin-controller: 课程管理
+ * @apiGroup course-admin-controller: 课程管理
  * @apiHeader {String} token 权限令牌
- * @apiParam {String} courceId 课程id
+ * @apiParam {String} courseId 课程id
  * @apiParam {String} teacherId 可选，讲师id
  * @apiParam {String} subjectId 可选，课程分类id
  * @apiParam {String} subjectParentId 可选，父级课程分类id(0代表一级分类)
@@ -114,16 +116,16 @@ router.put("/publish", async (req, res) => {
  *      },
  *      "message": ""
  *  }
- * @apiSampleRequest http://47.103.203.152/admin/edu/cource/update
+ * @apiSampleRequest http://47.103.203.152/admin/edu/course/update
  * @apiVersion 1.0.0
  */
 router.put("/update", async (req, res) => {
-	const { courceId, ...body } = req.body;
+	const { courseId, ...body } = req.body;
 
 	try {
-		const result = await Cources.updateOne(
+		const result = await courses.updateOne(
 			{
-				_id: courceId,
+				_id: courseId,
 			},
 			{ $set: body }
 		);
@@ -137,13 +139,17 @@ router.put("/update", async (req, res) => {
 });
 
 /**
- * @api {get} /admin/edu/cource/:page/:limit 获取课程分页列表
+ * @api {get} /admin/edu/course/:page/:limit 获取课程分页列表
  * @apiDescription 获取课程分页列表
  * @apiName get
- * @apiGroup cource-admin-controller: 课程管理
+ * @apiGroup course-admin-controller: 课程管理
  * @apiHeader {String} token 权限令牌
  * @apiParam {String} page 当前页码
  * @apiParam {String} limit 每页数量
+ * @apiParam {String} teacherId 可选，讲师id
+ * @apiParam {String} subjectId 可选，课程分类id
+ * @apiParam {String} subjectParentId 可选，父级课程分类id(0代表一级分类)
+ * @apiParam {String} title 可选，课程名称(模糊匹配)
  * @apiSuccess {Object} data 课程数据
  * @apiSuccessExample {json} Success-Response:
  *  {
@@ -153,11 +159,27 @@ router.put("/update", async (req, res) => {
  *      },
  *      "message": ""
  *  }
- * @apiSampleRequest http://47.103.203.152/admin/edu/cource/:page/:limit
+ * @apiSampleRequest http://47.103.203.152/admin/edu/course/:page/:limit
  * @apiVersion 1.0.0
  */
 router.get("/:page/:limit", async (req, res) => {
 	const { page, limit } = req.params;
+	const { title, teacherId, subjectId, subjectParentId } = req.query;
+
+	const condition = {};
+
+	if (title) {
+		condition.title = new RegExp(title);
+	}
+	if (teacherId) {
+		condition.teacherId = teacherId;
+	}
+	if (subjectId) {
+		condition.subjectId = subjectId;
+	}
+	if (subjectParentId) {
+		condition.subjectParentId = subjectParentId;
+	}
 
 	try {
 		let skip = 0;
@@ -170,8 +192,8 @@ router.get("/:page/:limit", async (req, res) => {
 			limitOptions.limit = +limit;
 		}
 
-		const total = await Cources.countDocuments({});
-		const items = await Cources.find({}, filter, limitOptions);
+		const total = await courses.countDocuments(condition);
+		const items = await courses.find(condition, filter, limitOptions);
 
 		res.json(
 			new SuccessModal({
@@ -188,10 +210,10 @@ router.get("/:page/:limit", async (req, res) => {
 });
 
 /**
- * @api {get} /admin/edu/cource 获取所有课程列表
+ * @api {get} /admin/edu/course 获取所有课程列表
  * @apiDescription 获取所有课程列表
  * @apiName getall
- * @apiGroup cource-admin-controller: 课程管理
+ * @apiGroup course-admin-controller: 课程管理
  * @apiHeader {String} token 权限令牌
  * @apiSuccess {Object} data 课程数据
  * @apiSuccessExample {json} Success-Response:
@@ -202,12 +224,12 @@ router.get("/:page/:limit", async (req, res) => {
  *      },
  *      "message": ""
  *  }
- * @apiSampleRequest http://47.103.203.152/admin/edu/cource
+ * @apiSampleRequest http://47.103.203.152/admin/edu/course
  * @apiVersion 1.0.0
  */
 router.get("/", async (req, res) => {
 	try {
-		const items = await Cources.find({}, filter);
+		const items = await courses.find({}, filter);
 
 		res.json(
 			new SuccessModal({
