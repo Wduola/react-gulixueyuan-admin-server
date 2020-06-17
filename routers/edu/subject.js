@@ -13,6 +13,39 @@ const filter = {
 };
 
 /**
+ * @api {get} /admin/edu/subject 获取所有一级课程分类数据
+ * @apiDescription 获取所有一级课程分类数据
+ * @apiName subject
+ * @apiGroup subject-admin-controller: 课程分类管理
+ * @apiHeader {String} token 权限令牌
+ * @apiSuccess {[]} data
+ * @apiSuccessExample {json} Success-Response:
+ *  {
+ *      "code": 20000,
+ *      "success" : true,
+ *      "data" : [],
+ *      "message": ""
+ *  }
+ * @apiSampleRequest http://47.103.203.152/admin/edu/subject
+ * @apiVersion 1.0.0
+ */
+router.get("/", async (req, res) => {
+	try {
+		const items = await Subjects.find({ parentId: "0" }, filter);
+
+		res.json(
+			new SuccessModal({
+				data: items,
+			})
+		);
+	} catch (e) {
+		console.log(e);
+
+		res.json(new ErrorModal({ message: e }));
+	}
+});
+
+/**
  * @api {post} /admin/edu/subject/save 添加课程分类
  * @apiDescription 添加课程分类
  * @apiName save
@@ -43,6 +76,72 @@ router.post("/save", async (req, res) => {
 	} catch (e) {
 		// 保存失败
 		res.json(new ErrorModal({ message: "课程分类名称已存在" }));
+	}
+});
+
+/**
+ * @api {get} /admin/edu/subject 获取所有一级课程分类数据
+ * @apiDescription 获取所有一级课程分类数据
+ * @apiName subject
+ * @apiGroup subject-admin-controller: 课程分类管理
+ * @apiHeader {String} token 权限令牌
+ * @apiSuccess {[]} data
+ * @apiSuccessExample {json} Success-Response:
+ *  {
+ *      "code": 20000,
+ *      "success" : true,
+ *      "data" : [],
+ *      "message": ""
+ *  }
+ * @apiSampleRequest http://47.103.203.152/admin/edu/subject
+ * @apiVersion 1.0.0
+ */
+router.get("/", async (req, res) => {
+	try {
+		const items = await Subjects.find({ parentId: "0" }, filter);
+
+		res.json(
+			new SuccessModal({
+				data: items,
+			})
+		);
+	} catch (e) {
+		console.log(e);
+
+		res.json(new ErrorModal({ message: e }));
+	}
+});
+
+/**
+ * @api {get} /admin/edu/subject/get 获取分类数据
+ * @apiDescription 获取分类数据
+ * @apiName getsubject
+ * @apiGroup subject-admin-controller: 课程分类管理
+ * @apiHeader {String} token 权限令牌
+ * @apiParam {String} id 课程分类id
+ * @apiSuccess {Object} data 课程分类数据
+ * @apiSuccessExample {json} Success-Response:
+ *  {
+ *      "code": 20000,
+ *      "success" : true,
+ *      "data" : {
+ *      },
+ *      "message": ""
+ *  }
+ * @apiSampleRequest http://47.103.203.152/admin/edu/subject/get
+ * @apiVersion 1.0.0
+ */
+router.get("/get", async (req, res) => {
+	const { id } = req.query;
+
+	try {
+		const result = await Subjects.findOne({ _id: id });
+
+		// 保存成功
+		res.json(new SuccessModal({ data: result }));
+	} catch (e) {
+		// 保存失败
+		res.json(new ErrorModal({ message: e }));
 	}
 });
 
